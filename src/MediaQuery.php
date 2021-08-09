@@ -351,7 +351,7 @@ class MediaQuery
         }
 
         if ($this->postDateMax) {
-            $query['date_query'][] = $this->dateQuery($this->postDateMin, 'post_date', '<=');
+            $query['date_query'][] = $this->dateQuery($this->postDateMax, 'post_date', '<=');
         }
     }
 
@@ -373,9 +373,7 @@ class MediaQuery
     private function dateQuery(DateTimeInterface $date, string $column, string $compare = '='): array
     {
         $date = getdate($date->getTimestamp());
-        return [
-            'column' => $column,
-            'compare' => $compare,
+        $query = [
             'year' => (int)$date['year'],
             'month' => (int)$date['mon'],
             'day' => (int)$date['mday'],
@@ -383,6 +381,20 @@ class MediaQuery
             'minute' => (int)$date['minutes'],
             'second' => (int)$date['seconds'],
         ];
+
+        if ($compare === '>=') {
+            $query = [
+                'after' => $query,
+                'inclusive' => true,
+            ];
+        } elseif ($compare === '<=') {
+            $query = [
+                'before' => $query,
+                'inclusive' => true,
+            ];
+        }
+
+        return $query + ['column' => $column];
     }
 
     private function buildQueryPostMimeType(array &$query): void
