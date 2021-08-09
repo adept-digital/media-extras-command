@@ -11,5 +11,10 @@
     "autoload": {
         "psr-4": {"AdeptDigital\\MediaCommands\\": "src"},
         "files": ["media-extras-command.php"]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "main"
+        }
     }
 }
