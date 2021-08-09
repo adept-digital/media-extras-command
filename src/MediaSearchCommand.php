@@ -101,6 +101,9 @@ class MediaSearchCommand
      * [--order=<field-direction>]
      * : Sorting order
      *
+     * [--limit=<number>]
+     * : Limit results
+     *
      * ## AVAILABLE FIELDS
      *
      * These fields will be displayed by default for each media:
@@ -230,6 +233,10 @@ class MediaSearchCommand
                 $orders[$order[0]] = $order[1] ?? 'DESC';
             }
             $query->setOrder($orders);
+        }
+
+        if (isset($options['limit'])) {
+            $query->setLimit((int)$options['limit']);
         }
 
         return $query;

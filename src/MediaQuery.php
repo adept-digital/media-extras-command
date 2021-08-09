@@ -12,7 +12,6 @@ class MediaQuery
 {
     private const DEFAULT_QUERY = [
         'post_type' => 'attachment',
-        'posts_per_page' => -1,
         'fields' => 'ids',
     ];
 
@@ -87,6 +86,9 @@ class MediaQuery
 
     /** @var string[] */
     private $order = ['post_date' => 'DESC'];
+
+    /** @var int|null */
+    private $limit = null;
 
     public function setKeyword(string ...$keyword): void
     {
@@ -216,6 +218,11 @@ class MediaQuery
         $this->order = $order;
     }
 
+    public function setLimit(?int $limit): void
+    {
+        $this->limit = $limit;
+    }
+
     /**
      * @return Generator<Media>
      */
@@ -224,7 +231,8 @@ class MediaQuery
         $results = get_posts($this->buildQuery());
         $results = $this->buildResults($results);
         $results = $this->filterResults($results);
-        return $this->sortResults($results);
+        $results = $this->sortResults($results);
+        return $this->limitResults($results);
     }
 
     private function buildResults(iterable $results): Generator
@@ -245,7 +253,7 @@ class MediaQuery
 
     private function sortResults(iterable $results): Generator
     {
-        $order = array_intersect_key($this->order, self::SORTING_FUNCTIONS);
+        $order = $this->getVirtualOrder();
         if (empty($order)) {
             yield from $results;
             return;
@@ -258,12 +266,36 @@ class MediaQuery
         foreach ($order as $field => $direction) {
             $function = $this->{self::SORTING_FUNCTIONS[$field]}();
             usort($results, $function);
-            if ($direction === 'DESC') {
+            if (strtolower($direction) === 'desc') {
                 $results = array_reverse($results);
             }
         }
 
         yield from $results;
+    }
+
+    private function limitResults(iterable $results): Generator
+    {
+        $order = $this->getVirtualOrder();
+        if (empty($order)) {
+            yield from $results;
+            return;
+        }
+
+        $count = 0;
+        foreach ($results as $result) {
+            if ($count >= $this->limit) {
+                break;
+            }
+
+            yield $result;
+            $count++;
+        }
+    }
+
+    private function getVirtualOrder(): array
+    {
+        return array_intersect_key($this->order, self::SORTING_FUNCTIONS);
     }
 
     private function buildQuery(): array
@@ -276,6 +308,7 @@ class MediaQuery
         $this->buildQueryPostModified($query);
         $this->buildQueryPostMimeType($query);
         $this->buildQueryOrder($query);
+        $this->buildQueryLimit($query);
         return $query;
     }
 
@@ -371,6 +404,18 @@ class MediaQuery
     private function buildQueryOrder(array &$query): void
     {
         $query['orderby'] = array_diff_key($this->order, self::SORTING_FUNCTIONS);
+    }
+
+    private function buildQueryLimit(array &$query): void
+    {
+        $query['posts_per_page'] = -1;
+        if ($this->limit === null || $this->limit < 0) {
+            return;
+        }
+
+        if (empty($this->getVirtualOrder())) {
+            $query['posts_per_page'] = $this->limit;
+        }
     }
 
     private function isFiltered(Media $media): bool
