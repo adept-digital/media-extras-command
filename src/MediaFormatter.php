@@ -80,4 +80,9 @@ class MediaFormatter
         }
         return $value;
     }
+
+    public function __toString(): string
+    {
+        return (string)$this->media->getId();
+    }
 }
