@@ -1,0 +1,15 @@
+{
+    "name": "adept-digital/media-extras-command",
+    "type": "wp-cli-package",
+    "authors": [
+        {
+            "name": "David Gallagher",
+            "email": "david@adeptdigital.com.au"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {"AdeptDigital\\MediaCommands\\": "src"},
+        "files": ["media-extras-command.php"]
+    }
+}
