@@ -1,6 +1,8 @@
 {
     "name": "adept-digital/media-extras-command",
     "type": "wp-cli-package",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "authors": [
         {
             "name": "David Gallagher",
@@ -11,10 +13,5 @@
     "autoload": {
         "psr-4": {"AdeptDigital\\MediaCommands\\": "src"},
         "files": ["media-extras-command.php"]
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "main"
-        }
     }
 }
