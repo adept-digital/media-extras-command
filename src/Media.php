@@ -70,7 +70,7 @@ class Media
     public function getFileSize(): int
     {
         if (!isset($this->fileSize)) {
-            $this->fileSize = filesize($this->getFilePath());
+            $this->fileSize = $this->isFileExists() ? filesize($this->getFilePath()) : 0;
         }
         return $this->fileSize;
     }
@@ -134,6 +134,11 @@ class Media
     public function getPostParent(): ?WP_Post
     {
         return get_post($this->getPost()->post_parent);
+    }
+
+    public function isFileExists(): bool
+    {
+        return file_exists($this->getFilePath());
     }
 
     private function getPost(): WP_Post
