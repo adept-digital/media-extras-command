@@ -192,17 +192,14 @@ class Media
             return true;
         }
 
-        $sizes = $this->getSizes();
+        $sizes = array_values($this->getSizes());
         if (!$sizes) {
             return false;
         }
 
-        foreach ($sizes as $size) {
-            if (Search::isStringInPosts($size['file'])) {
-                return true;
-            }
-        }
-        return false;
+        $basedir = dirname($this->getFileName());
+        $sizes = array_map(function ($s) use ($basedir) { return "{$basedir}/{$s['file']}"; }, $sizes);
+        return Search::isStringInPosts(...$sizes);
     }
 
     public function isAttached(): bool

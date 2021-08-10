@@ -6,20 +6,33 @@ use WP_Query;
 
 class Search
 {
-    private const EXCLUDE_POST_TYPES = ['nav_menu_item', 'oembed_cache'];
+    private const EXCLUDE_POST_TYPES = ['nav_menu_item', 'oembed_cache', 'user_request'];
 
     private static $postTypes;
 
-    public static function isStringInPosts(string $url): bool
+    public static function isStringInPosts(string ...$values): bool
     {
-        $query = new WP_Query([
-            's' => $url,
-            'sentence' => true,
-            'post_type' => self::getPostTypes(),
-            'fields' => 'ids',
-            'posts_per_page' => 1,
-        ]);
-        return $query->have_posts();
+        global $wpdb;
+
+        if (count($values) < 1) {
+            return false;
+        }
+
+        $search = [];
+        foreach ($values as $value) {
+            $search[] = Mysql::buildComparison('post_content', "%{$value}%", 'LIKE');
+        }
+        $search = implode(' OR ', $search);
+
+        $postTypes = implode(',', array_map([Mysql::class, 'escapeValue'], self::getPostTypes()));
+        $query = [
+            'SELECT COUNT(*)',
+            "FROM {$wpdb->posts}",
+            "WHERE ({$search}) AND `post_type` IN ({$postTypes})",
+            'LIMIT 1'
+        ];
+        $query = implode("\n", $query);
+        return (bool)$wpdb->get_var($query);
     }
 
     private static function getPostTypes(): array
