@@ -17,6 +17,8 @@ class Mysql
         '<=',
         'LIKE',
         'NOT LIKE',
+        'RLIKE',
+        'NOT RLIKE',
     ];
 
     private const MATCH_IDENTIFIER = '/^[a-z][a-z0-9_-]*$/i';

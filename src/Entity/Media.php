@@ -158,6 +158,7 @@ class Media
             $this->isInUse = (
                 $this->isPostThumb() ||
                 $this->isTermThumb() ||
+                $this->isInProductGallery() ||
                 $this->isInPostContent()
             );
         }
@@ -182,6 +183,20 @@ class Media
         $query = new MetaQuery('term', $GLOBALS['wpdb']);
         $query->setKey('thumbnail_id');
         $query->setValue($this->id);
+        $results = $query->getResults();
+        return iterator_count($results);
+    }
+
+    /**
+     * @note this is used in WooCommerce
+     * @return bool
+     */
+    private function isInProductGallery(): bool
+    {
+        $query = new MetaQuery('post', $GLOBALS['wpdb']);
+        $query->setKey('_product_image_gallery');
+        $query->setValue("\\b{$this->id}\\b");
+        $query->setComparison('RLIKE');
         $results = $query->getResults();
         return iterator_count($results);
     }
