@@ -1,7 +1,8 @@
 <?php
 
-namespace AdeptDigital\MediaCommands;
+namespace AdeptDigital\MediaCommands\Query;
 
+use AdeptDigital\MediaCommands\Entity\Media;
 use AdeptDigital\MediaCommands\Util\MimeTypes;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -60,9 +61,6 @@ class MediaQuery
     /** @var int[] */
     private $postParent = [];
 
-    /** @var bool|null */
-    private $postAttached = null;
-
     /** @var DateTimeInterface|null */
     private $postDate = null;
 
@@ -83,6 +81,15 @@ class MediaQuery
 
     /** @var string[] */
     private $postMimeType = [];
+
+    /** @var bool|null */
+    private $isAttached = null;
+
+    /** @var bool|null */
+    private $isInUse = null;
+
+    /** @var bool|null */
+    private $isFileExists = null;
 
     /** @var string[] */
     private $order = ['post_date' => 'DESC'];
@@ -155,9 +162,19 @@ class MediaQuery
         $this->postParent = $postParent;
     }
 
-    public function setPostAttached(?bool $postAttached): void
+    public function setIsAttached(?bool $isAttached): void
     {
-        $this->postAttached = $postAttached;
+        $this->isAttached = $isAttached;
+    }
+
+    public function setIsInUse(?bool $isInUse): void
+    {
+        $this->isInUse = $isInUse;
+    }
+
+    public function setIsFileExists(?bool $isFileExists): void
+    {
+        $this->isFileExists = $isFileExists;
     }
 
     public function setPostDate($postDate): void
@@ -324,11 +341,11 @@ class MediaQuery
     {
         if ($this->postParent) {
             $query['post_parent__in'] = $this->postParent;
-        } elseif ($this->postAttached === true) {
+        } elseif ($this->isAttached === true) {
             $query['post_parent__not_in'] = [0];
         }
 
-        if ($this->postAttached === false) {
+        if ($this->isAttached === false) {
             $query['post_parent__in'] = array_merge($query['post_parent__in'] ?? [], [0]);
         }
     }
@@ -435,7 +452,9 @@ class MediaQuery
         return (
             $this->isFilteredFileSize($media) ||
             $this->isFilteredMediaWidth($media) ||
-            $this->isFilteredMediaHeight($media)
+            $this->isFilteredMediaHeight($media) ||
+            $this->isFilteredInUse($media) ||
+            $this->isFilteredFileExists($media)
         );
     }
 
@@ -464,6 +483,22 @@ class MediaQuery
             ($this->mediaHeightMin && $this->mediaHeightMin > $media->getMediaHeight()) ||
             ($this->mediaHeightMax && $this->mediaHeightMax < $media->getMediaHeight())
         );
+    }
+
+    private function isFilteredInUse(Media $media): bool
+    {
+        if ($this->isInUse === null) {
+            return false;
+        }
+        return $this->isInUse !== $media->isInUse();
+    }
+
+    private function isFilteredFileExists(Media $media): bool
+    {
+        if ($this->isFileExists === null) {
+            return false;
+        }
+        return $this->isFileExists !== $media->isFileExists();
     }
 
     private function sortFileSize(): callable

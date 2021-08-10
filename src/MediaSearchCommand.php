@@ -2,6 +2,7 @@
 
 namespace AdeptDigital\MediaCommands;
 
+use AdeptDigital\MediaCommands\Query\MediaQuery;
 use Generator;
 use WP_CLI\Formatter as Output;
 
@@ -45,6 +46,18 @@ class MediaSearchCommand
      *
      * [--unattached]
      * : Unattached media
+     *
+     * [--used]
+     * : Media in use (experimental)
+     *
+     * [--unused]
+     * : Media not in use (experimental)
+     *
+     * [--file_exists]
+     * : File exists
+     *
+     * [--file_missing]
+     * : File is missing
      *
      * [--post_parent=<post_id>]
      * : Unattached media
@@ -126,6 +139,9 @@ class MediaSearchCommand
      * * post_parent
      * * post_modified
      * * post_mime_type
+     * * is_in_use
+     * * is_attached
+     * * is_file_exists
      */
     public function __invoke(array $arguments = [], array $options = [])
     {
@@ -193,9 +209,21 @@ class MediaSearchCommand
         }
 
         if (!empty($options['attached'])) {
-            $query->setPostAttached(true);
+            $query->setIsAttached(true);
         } elseif (!empty($options['unattached'])) {
-            $query->setPostAttached(false);
+            $query->setIsAttached(false);
+        }
+
+        if (!empty($options['used'])) {
+            $query->setIsInUse(true);
+        } elseif (!empty($options['unused'])) {
+            $query->setIsInUse(false);
+        }
+
+        if (!empty($options['file_exists'])) {
+            $query->setIsFileExists(true);
+        } elseif (!empty($options['file_missing'])) {
+            $query->setIsFileExists(false);
         }
 
         if (isset($options['post_date'])) {

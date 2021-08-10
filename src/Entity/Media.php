@@ -1,10 +1,13 @@
 <?php
 
-namespace AdeptDigital\MediaCommands;
+namespace AdeptDigital\MediaCommands\Entity;
 
+use AdeptDigital\MediaCommands\Query\MetaQuery;
 use AdeptDigital\MediaCommands\Util\MimeTypes;
+use AdeptDigital\MediaCommands\Util\Search;
 use DateTimeInterface;
 use WP_Post;
+use WP_Query;
 use WP_User;
 
 class Media
@@ -32,6 +35,9 @@ class Media
 
     /** @var string */
     private $postStatus;
+
+    /** @var bool */
+    private $isInUse;
 
     public function __construct(int $id)
     {
@@ -99,6 +105,11 @@ class Media
         return $this->getMeta()['height'] ?? null;
     }
 
+    public function getSizes(): ?array
+    {
+        return $this->getMeta()['sizes'] ?? null;
+    }
+
     public function getPostDate(): DateTimeInterface
     {
         return get_post_datetime($this->getPost());
@@ -139,6 +150,64 @@ class Media
     public function isFileExists(): bool
     {
         return file_exists($this->getFilePath());
+    }
+
+    public function isInUse(): bool
+    {
+        if (!isset($this->isInUse)) {
+            $this->isInUse = (
+                $this->isPostThumb() ||
+                $this->isTermThumb() ||
+                $this->isInPostContent()
+            );
+        }
+        return $this->isInUse;
+    }
+
+    private function isPostThumb(): bool
+    {
+        $query = new MetaQuery('post', $GLOBALS['wpdb']);
+        $query->setKey('_thumbnail_id');
+        $query->setValue($this->id);
+        $results = $query->getResults();
+        return iterator_count($results);
+    }
+
+    /**
+     * @note this is used in WooCommerce
+     * @return bool
+     */
+    private function isTermThumb(): bool
+    {
+        $query = new MetaQuery('term', $GLOBALS['wpdb']);
+        $query->setKey('thumbnail_id');
+        $query->setValue($this->id);
+        $results = $query->getResults();
+        return iterator_count($results);
+    }
+
+    private function isInPostContent(): bool
+    {
+        if (Search::isStringInPosts($this->getFileName())) {
+            return true;
+        }
+
+        $sizes = $this->getSizes();
+        if (!$sizes) {
+            return false;
+        }
+
+        foreach ($sizes as $size) {
+            if (Search::isStringInPosts($size['file'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function isAttached(): bool
+    {
+        return $this->getPostParent() !== null;
     }
 
     private function getPost(): WP_Post

@@ -2,6 +2,7 @@
 
 namespace AdeptDigital\MediaCommands;
 
+use AdeptDigital\MediaCommands\Entity\Media;
 use DateTimeInterface;
 use OutOfRangeException;
 use WP_Post;
@@ -25,6 +26,9 @@ class MediaFormatter
         'post_author' => 'getPostAuthor',
         'post_mime_type' => 'getPostMimeType',
         'post_parent' => 'getPostParent',
+        'is_file_exists' => 'isFileExists',
+        'is_in_use' => 'isInUse',
+        'is_attached' => 'isAttached',
     ];
 
     private const FORMAT_MAP = [
@@ -33,6 +37,9 @@ class MediaFormatter
         'post_date' => 'formatDate',
         'post_modified' => 'formatDate',
         'file_size' => 'formatFileSize',
+        'is_file_exists' => 'formatBool',
+        'is_in_use' => 'formatBool',
+        'is_attached' => 'formatBool',
     ];
 
     /** @var Media */
@@ -61,6 +68,11 @@ class MediaFormatter
     private function formatFileSize(int $size): ?string
     {
         return size_format($size);
+    }
+
+    private function formatBool(bool $value): string
+    {
+        return $value ? 'yes' : 'no';
     }
 
     public function __isset($name)
